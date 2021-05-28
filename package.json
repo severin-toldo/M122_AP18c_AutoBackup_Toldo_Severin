@@ -2,8 +2,9 @@
   "name": "m122_ap18c_autobackup_toldo_severin",
   "version": "1.0.0",
   "description": "AutoBackup",
-  "main": "bin/index.js",
+  "main": "dist/out-tsc/index.js",
   "scripts": {
+    "start": "tsc --p tsconfig.json && node .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -17,6 +18,14 @@
   },
   "homepage": "https://github.com/severin-toldo/M122_AP18c_AutoBackup_Toldo_Severin#readme",
   "bin": {
-   "hello": "./bin/index.js"
- }
+    "autobackup": "./dist/out-tsc/index.js"
+  },
+  "dependencies": {
+    "ftp": "^0.3.10",
+    "minimist": "^1.2.5",
+    "rxjs": "^7.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.3.2"
+  }
 }
