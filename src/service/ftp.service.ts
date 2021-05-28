@@ -1,5 +1,5 @@
 import {Observable, of, Subject, combineLatest} from "rxjs";
-import {map, tap} from "rxjs/operators";
+import {delay, map, tap} from "rxjs/operators";
 import {Status} from "../model/status.model";
 
 export class FtpService {
@@ -42,7 +42,9 @@ export class FtpService {
             }
         });
 
-        return uploadStatus$.pipe(map(status => this.handleStatus(status)));
+        return uploadStatus$
+            .pipe(map(status => this.handleStatus(status)))
+            .pipe(delay(5)); // apparently fixes consecutive up & downloads
     }
 
     public download(sourcePath: string, targetPath: string): Observable<Status> {
@@ -59,7 +61,9 @@ export class FtpService {
             }
         });
 
-        return downloadStatus$.pipe(map(status => this.handleStatus(status)));
+        return downloadStatus$
+            .pipe(map(status => this.handleStatus(status)))
+            .pipe(delay(5)); // apparently fixes consecutive up & downloads
     }
 
     private handleStatus(status: Status): Status {
