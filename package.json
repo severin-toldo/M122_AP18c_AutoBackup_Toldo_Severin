@@ -1,0 +1,22 @@
+{
+  "name": "m122_ap18c_autobackup_toldo_severin",
+  "version": "1.0.0",
+  "description": "AutoBackup",
+  "main": "bin/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/severin-toldo/M122_AP18c_AutoBackup_Toldo_Severin.git"
+  },
+  "author": "stoldo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/severin-toldo/M122_AP18c_AutoBackup_Toldo_Severin/issues"
+  },
+  "homepage": "https://github.com/severin-toldo/M122_AP18c_AutoBackup_Toldo_Severin#readme",
+  "bin": {
+   "hello": "./bin/index.js"
+ }
+}
