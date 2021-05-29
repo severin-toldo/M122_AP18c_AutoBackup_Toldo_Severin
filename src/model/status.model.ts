@@ -1,4 +1,5 @@
+// TODO comment
 export class Status {
-    public status: 'ready' | 'error' | 'success';
+    public status: string;
     public payload?: any;
 }

@@ -3,7 +3,7 @@ import {catchError, delay, map, tap} from "rxjs/operators";
 import {Status} from "../model/status.model";
 import {CommonUtils} from "../common.utils";
 import {FileService} from "./file.service";
-import {throwError} from "rxjs";
+
 
 export class FtpService {
 
@@ -14,7 +14,8 @@ export class FtpService {
                 private fs: any,
                 private fileService: FileService) {
         this.ftp.on('error', (error) => this.ftpClientStatus$.next({status: 'error', payload: error}));
-        this.ftp.on('ready', () => this.ftpClientStatus$.next({status: 'ready'}));
+        this.ftp.on('ready', () => this.ftpClientStatus$.next({status: 'connected'}));
+        this.ftp.on('end', () => this.ftpClientStatus$.next({status: 'disconnected'}));
     }
 
     public connect(host: string, user: string, password: string): Observable<Status> {
@@ -23,6 +24,12 @@ export class FtpService {
             'user': user,
             'password': password
         });
+
+        return this.ftpClientStatus$.pipe(map(status => CommonUtils.handleStatus(status)))
+    }
+
+    public disconnect(): Observable<Status> {
+        this.ftp.end();
 
         return this.ftpClientStatus$.pipe(map(status => CommonUtils.handleStatus(status)))
     }
@@ -45,7 +52,6 @@ export class FtpService {
                 observer.next({status: 'success'});
             });
         })
-            .pipe(tap(() => this.ftp.end()))
             .pipe(map((status: Status) => CommonUtils.handleStatus(status)));
     }
 
@@ -69,7 +75,6 @@ export class FtpService {
                 observer.next({status: 'success'});
             });
         })
-            .pipe(tap(() => this.ftp.end()))
             .pipe(map((status: Status) => CommonUtils.handleStatus(status)));
     }
 
