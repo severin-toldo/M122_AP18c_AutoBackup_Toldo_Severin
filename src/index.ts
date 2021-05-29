@@ -3,6 +3,7 @@
 
 import {delay, switchMap} from 'rxjs/operators';
 import {FtpService} from "./service/ftp.service";
+import {FileService} from "./service/file.service";
 
 declare function require(name: string);
 declare const process: {argv: any};
@@ -11,8 +12,12 @@ const OS = require('os');
 const FS = require('fs');
 const ARGS = require('minimist')(process.argv.slice(2)); // library to parse command line arguments
 const FTP = require( 'ftp' );
+const ARCHIVER = require('archiver');
+const MD5 = require('md5');
 
 const ftpService = new FtpService(new FTP(), FS); // new FTP() -> library's ftp client needs to be initialized like this, don't ask me why
+const fileService = new FileService(FS, OS, ARCHIVER, MD5);
+
 
 const DEFAULT_CONFIG_FILE_NAME = 'autobackup.conf';
 const DEFAULT_CONFIG_FILE_PATH = OS.homedir() + '/' + DEFAULT_CONFIG_FILE_NAME;
@@ -20,11 +25,13 @@ const DEFAULT_CONFIG_FILE_EXISTS = FS.existsSync(DEFAULT_CONFIG_FILE_PATH);
 
 
 
-// compare files by checksum
-// zip file
-// get file size
 
-// -> all as file service
+// fileService
+//     .zipFile('/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt', '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.zip')
+//     .subscribe(res => console.log('res: ', res), error => console.log('EROOOOOOR: ', error));
+
+//     const path = '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt';
+
 
 // send email with attachment -> MailService
 
@@ -49,8 +56,8 @@ const DEFAULT_CONFIG_FILE_EXISTS = FS.existsSync(DEFAULT_CONFIG_FILE_PATH);
 
 // ftpService
 //     .connect('ftp.byethost32.com', 'b32_28736452', '23hjSJD45')
-//     .pipe(switchMap(() => ftpService.download('/htdocs/mytest.txt', '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/new_copy_3.txt')))
-//     .pipe(switchMap(() => ftpService.upload('/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt', '/htdocs/new_file_3.txt')))
+//     .pipe(switchMap(() => ftpService.download('/htdocs/mytest.txt', '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/new_copy_4.txt')))
+//     .pipe(switchMap(() => ftpService.upload('/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt', '/htdocs/new_file_4.txt')))
 //     .subscribe(res2 => {
 //         console.log('download + upload success! ', res2);
 //     }, error => {
@@ -69,104 +76,16 @@ const DEFAULT_CONFIG_FILE_EXISTS = FS.existsSync(DEFAULT_CONFIG_FILE_PATH);
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // console.log(ARGS['name']);
-
-// readFile(DEFAULT_CONFIG_FILE_PATH, data => console.log(data));
-
+// fileSizeInBytes / (1024*1024)
 
 
 
 
 
-// errno: -13,
-//     code: 'EACCES',
-//     syscall: 'open',
-//     path: '/Users/stoldo/autobackup.conf'
-
-
-// FS.readFile('/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt', 'utf8', function (err, data) {
-//     if (err) throw err;
-//     console.log(data)
-// });
-
-// function readFile(path: string, callbackFn: (data: any) => void): void {
-//     FS.readFile(path, 'utf8', (error, data) => {
-//         if (error) {
-//             throw error;
-//         }
-//
-//         callbackFn.call(null, data);
-//     });
-// }
 
 
 
 
 
-//
-// console.log(os.homedir() + '/' + DEFAULT_CONFIG_FILE_NAME);
-//
-//
-//
-// readFile(
-//     os.homedir() + '/' + DEFAULT_CONFIG_FILE_NAME,
-//     data => {
-//         console.log('data: ', data);
-//     },
-//     error => {
-//         console.log('error: ', error);
-//     }
-// );
-//
-//
-//
-// function readFile(path: string, onSuccessCallbackFn: (data: any) => void, onErrorCallbackFn: (error: any) => void): void {
-//     fs.readFile(path, 'utf8', (error, data) => {
-//         if (error) {
-//             console.log(error);
-//             onErrorCallbackFn.apply(error);
-//         } else {
-//             onErrorCallbackFn.apply(data);
-//         }
-//     });
-// }
 
-// export const DEFUALT_CONFIG_FILE_PATH = '';
-
-
-
-// var fs = require('fs');
-// var obj;
-
-
-
-// var sudo = require('sudo-prompt');
-// var options = {
-//     name: 'Electron',
-// };
-// sudo.exec('echo hello', options,
-//     function(error, stdout, stderr) {
-//         // if (error) throw error;
-//         console.log('error: ', error);
-//         console.log('stdout: ' + stdout);
-//         console.log('stderr: ' + stdout);
-//     }
-// );

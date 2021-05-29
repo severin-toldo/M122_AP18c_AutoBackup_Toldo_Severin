@@ -21,7 +21,9 @@
     "autobackup": "./dist/out-tsc/index.js"
   },
   "dependencies": {
+    "archiver": "^5.3.0",
     "ftp": "^0.3.10",
+    "md5": "^2.3.0",
     "minimist": "^1.2.5",
     "rxjs": "^7.1.0"
   },
