@@ -1,6 +1,9 @@
 import {Observable, of, Subject, combineLatest} from "rxjs";
-import {delay, map, tap} from "rxjs/operators";
+import {catchError, delay, map, tap} from "rxjs/operators";
 import {Status} from "../model/status.model";
+import {CommonUtils} from "../common.utils";
+import {FileService} from "./file.service";
+import {throwError} from "rxjs";
 
 export class FtpService {
 
@@ -8,7 +11,8 @@ export class FtpService {
 
 
     constructor(private ftp: any,
-                private fs: any) {
+                private fs: any,
+                private fileService: FileService) {
         this.ftp.on('error', (error) => this.ftpClientStatus$.next({status: 'error', payload: error}));
         this.ftp.on('ready', () => this.ftpClientStatus$.next({status: 'ready'}));
     }
@@ -20,57 +24,53 @@ export class FtpService {
             'password': password
         });
 
-        return this.ftpClientStatus$.pipe(map(status => this.handleStatus(status)))
+        return this.ftpClientStatus$.pipe(map(status => CommonUtils.handleStatus(status)))
     }
 
     public upload(sourcePath: string, targetPath: string): Observable<Status> {
-        const _this = this;
-        const uploadStatus$ = new Subject<Status>();
+        return Observable.create(observer => {
+            this.ftp.put(sourcePath, targetPath, (error, response) => {
 
-        this.ftp.put(sourcePath, targetPath, (error, response) => {
+                // library doesn't check if file exists
+                if (!this.fileService.doesFileExist(sourcePath)) {
+                    observer.next({status: 'error', payload: new Error('Invalid source path, file does not exist! ' + sourcePath)});
+                    return;
+                }
 
-            // library doesn't check if file exists...
-            if (!this.fs.existsSync(sourcePath)) {
-                error = new Error('Invalid source path, file does not exist! ' + sourcePath);
-            }
+                if (error) {
+                    observer.next({status: 'error', payload: error});
+                    return;
+                }
 
-            if (error) {
-                uploadStatus$.next({status: 'error', payload: error});
-            } else {
-                _this.ftp.end();
-                uploadStatus$.next({status: 'success', payload: response});
-            }
-        });
-
-        return uploadStatus$
-            .pipe(map(status => this.handleStatus(status)))
-            .pipe(delay(5)); // apparently fixes consecutive up & downloads
+                observer.next({status: 'success'});
+            });
+        })
+            .pipe(tap(() => this.ftp.end()))
+            .pipe(map((status: Status) => CommonUtils.handleStatus(status)));
     }
 
     public download(sourcePath: string, targetPath: string): Observable<Status> {
         const _this = this;
-        const downloadStatus$ = new Subject<Status>();
 
-        this.ftp.get(sourcePath, (error, stream) => {
-            if (error) {
-                downloadStatus$.next({status: 'error', payload: error});
-            } else {
-                stream.once('close', () => _this.ftp.end());
+        return Observable.create(observer => {
+            this.ftp.get(sourcePath, (error, stream) => {
+                // library doesn't check if parent file exists
+                if (!this.fileService.doesParentFileExist(targetPath)) {
+                    observer.next({status: 'error', payload: new Error('Invalid target path, parent file does not exist! ' + targetPath)});
+                    return;
+                }
+
+                if (error) {
+                    observer.next({status: 'error', payload: error});
+                    return;
+                }
+
                 stream.pipe(_this.fs.createWriteStream(targetPath));
-                downloadStatus$.next({status: 'success'});
-            }
-        });
-
-        return downloadStatus$
-            .pipe(map(status => this.handleStatus(status)))
-            .pipe(delay(5)); // apparently fixes consecutive up & downloads
+                observer.next({status: 'success'});
+            });
+        })
+            .pipe(tap(() => this.ftp.end()))
+            .pipe(map((status: Status) => CommonUtils.handleStatus(status)));
     }
 
-    private handleStatus(status: Status): Status {
-        if (status.status === 'error') {
-            throw status.payload;
-        }
-
-        return status;
-    }
 }
