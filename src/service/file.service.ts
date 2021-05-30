@@ -1,7 +1,9 @@
-import {Observable, of, Subject, from} from "rxjs";
+import {from, Observable} from "rxjs";
 import {Status} from "../model/status.model";
-import {map, tap} from "rxjs/operators";
+import {map} from "rxjs/operators";
 import {CommonUtils} from "../common.utils";
+import {ErrorCode} from "../model/error-code.enum";
+import {ErrorCodeError} from "../model/error-code-error.model";
 
 
 export class FileService {
@@ -13,7 +15,8 @@ export class FileService {
     constructor(private fs: any,
                 private os: any,
                 private archiver: any,
-                private md5: any) {
+                private md5: any,
+                private zipper: any) {
     }
 
     public getHomeDirPath(): string {
@@ -45,39 +48,28 @@ export class FileService {
         return this.getFileInformation(path).size;
     }
 
+    public getFileSizeInMb(path: string): number {
+        return this.getFileSize(path) / (1024 * 1024);
+    }
+
     public getFileMd5Checksum(path: string): string {
         return this.md5(this.getFileContent(path));
     }
 
-    public zipFile(sourcePath: string, targetPath: string): Observable<Status> {
-        return from(new Promise((resolve, reject) => {
+    public getFileName(path: string): string {
+        return path.replace(/^.*[\\\/]/, '');
+    }
 
-            // zip library doesn't check if file exists
-            if (!this.doesFileExist(sourcePath)) {
-                reject({status: 'error', payload: new Error('Invalid source path, file does not exist! ' + sourcePath)});
-                return;
-            }
+    public zipFile(path: string): any {
+        return this.zipper
+            .sync
+            .zip(path)
+            .compress()
+            .memory();
+    }
 
-            // zip library doesn't check if parent file exists
-            if (!this.doesParentFileExist(targetPath)) {
-                reject({status: 'error', payload: new Error('Invalid target path, parent file does not exist! ' + targetPath)});
-                return;
-            }
-
-            const archive = this.archiver('zip', { zlib: { level: 9 }});
-            const stream = this.fs.createWriteStream(targetPath);
-
-            archive
-                .file(sourcePath, false)
-                .on('error', error => reject({status: 'error', payload: error}))
-                .pipe(stream);
-
-            stream.on('close', () => resolve({status: 'success'}));
-            archive.finalize();
-
-            return;
-        }))
-            .pipe(map((status: Status) => CommonUtils.handleStatus(status)));
+    public deleteFile(path: string): void {
+        this.fs.unlinkSync(path);
     }
 }
 

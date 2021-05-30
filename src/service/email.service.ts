@@ -1,10 +1,15 @@
-import {Observable, of, Subject, from} from "rxjs";
+import {Observable} from "rxjs";
 import {Status} from "../model/status.model";
-import {map, tap} from "rxjs/operators";
+import {tap} from "rxjs/operators";
 import {CommonUtils} from "../common.utils";
+import {ErrorCode} from "../model/error-code.enum";
+import {ErrorCodeError} from "../model/error-code-error.model";
+import {FileService} from "./file.service";
 
 
 export class EmailService {
+
+    public static readonly MAX_ALLOWED_ATTACHMENT_SIZE_IN_MB = 25;
 
     private transporter: any;
 
@@ -26,12 +31,12 @@ export class EmailService {
     public sendEmail(mailOptions: any): Observable<Status> {
         return Observable.create(observer => {
             if (!this.transporter) {
-                observer.next({status: 'error', payload: new Error('no transporter was set up!')})
+                observer.next({status: 'error', payload: new ErrorCodeError(ErrorCode.SENDING_EMAIL_FAILED, new Error('no transporter was set up!'))})
             }
 
             this.transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
-                    observer.next({status: 'error', payload: error})
+                    observer.next({status: 'error', payload: new ErrorCodeError(ErrorCode.SENDING_EMAIL_FAILED, error)})
                 } else {
                     observer.next({status: 'success', payload: info.response});
                 }

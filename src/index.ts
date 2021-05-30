@@ -1,11 +1,13 @@
 // #!/usr/bin/env node
 
 
-import {catchError, delay, switchMap, tap} from 'rxjs/operators';
+import {catchError, map, switchMap, tap} from 'rxjs/operators';
 import {FtpService} from "./service/ftp.service";
 import {FileService} from "./service/file.service";
-import {Observable, of} from "rxjs";
 import {EmailService} from "./service/email.service";
+import {CommonUtils} from "./common.utils";
+import {ErrorCode} from "./model/error-code.enum";
+import {ErrorCodeError} from "./model/error-code-error.model";
 
 declare function require(name: string);
 declare const process: {argv: any};
@@ -17,8 +19,9 @@ const FTP = require( 'ftp' );
 const ARCHIVER = require('archiver');
 const MD5 = require('md5');
 const NODEMAILER = require('nodemailer');
+const ZIPPER = require('zip-local');
 
-const fileService = new FileService(FS, OS, ARCHIVER, MD5);
+const fileService = new FileService(FS, OS, ARCHIVER, MD5, ZIPPER);
 const ftpService = new FtpService(new FTP(), FS, fileService); // new FTP() -> library's ftp client needs to be initialized like this, don't ask me why
 const emailService = new EmailService(NODEMAILER);
 
@@ -27,15 +30,93 @@ const DEFAULT_CONFIG_FILE_NAME = 'autobackup.conf';
 const DEFAULT_CONFIG_FILE_PATH = OS.homedir() + '/' + DEFAULT_CONFIG_FILE_NAME;
 const DEFAULT_CONFIG_FILE_EXISTS = FS.existsSync(DEFAULT_CONFIG_FILE_PATH);
 
+// TODO via config file and or arguments
+const FTP_HOST = 'ftp.byethost32.com';
+const FTP_USER = 'b32_28736452';
+const FTP_PASSWORD = '23hjSJD45';
+const FTP_BACKUP_LOCATION = '/htdocs';
+
+const EMAIL_SERVICE = 'gmail';
+const EMAIL_USER = 'backuptool24@gmail.com';
+const EMAIL_PASSWORD = '?m6X7RgwH[3^6>E9E4gQnXFE*r,ENkaUL236,)Dykwcg2@Fxv&';
+
+const EMAIL_TO = 'stoldo@runmyaccounts.com';
+const FILE_TO_BACKUP_PATH = '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt';
 
 
-//     const path = '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt';
-// console.log(ARGS['name']);
-// fileSizeInBytes / (1024*1024)
+const fileToBackupName = fileService.getFileName(FILE_TO_BACKUP_PATH);
+const backupFilePath = FTP_BACKUP_LOCATION + FileService.SEPARATOR + buildBackupFileName(fileToBackupName);
+const confirmationFilePath = fileService.getTmpDirPath() + FileService.SEPARATOR + fileToBackupName;
+
+
+
+// TODO console outputs as in doku -> also colors
+
+ftpService
+    .connect(FTP_HOST, FTP_USER, FTP_PASSWORD)
+    .pipe(switchMap(() => ftpService.upload(FILE_TO_BACKUP_PATH, backupFilePath)))
+    .pipe(switchMap(() => ftpService.download(backupFilePath, confirmationFilePath)))
+    .pipe(switchMap(() => ftpService.disconnect()))
+    .pipe(map(() => {
+        const originalFileSize = fileService.getFileSize(FILE_TO_BACKUP_PATH);
+        const downloadedFileSize = fileService.getFileSize(confirmationFilePath);
+
+        if (originalFileSize !== downloadedFileSize) {
+            throw new ErrorCodeError(ErrorCode.FILES_NOT_THE_SAME, new Error('file sizes are not equal!'));
+        }
+
+        const originalFileMd5Checksum = fileService.getFileMd5Checksum(FILE_TO_BACKUP_PATH);
+        const downloadedFileMd5Checksum = fileService.getFileMd5Checksum(confirmationFilePath);
+
+        if (originalFileMd5Checksum !== downloadedFileMd5Checksum) {
+            throw new ErrorCodeError(ErrorCode.FILES_NOT_THE_SAME, new Error('file checksums are not equal!'));
+        }
+
+        fileService.deleteFile(confirmationFilePath);
+
+        const zippedFileBuffer = fileService.zipFile(FILE_TO_BACKUP_PATH);
+
+        return {status: 'success', payload: zippedFileBuffer};
+    }))
+    .pipe(catchError(error => CommonUtils.handleError(error)))
+    .pipe(switchMap(status => {
+        const mailOptions: any = {
+            from: 'auto@backup.com',
+            to: EMAIL_TO,
+            subject: 'AutoBackup Status E-Mail - ' + CommonUtils.getCurrentDateFormatted(),
+        };
+
+        if (status.status === 'success') {
+            mailOptions.text = 'Backup Successful.';
+            mailOptions.attachments = [
+                {
+                    filename: fileToBackupName + '.zip',
+                    content: status.payload
+                }
+            ]
+        } else {
+            mailOptions.text = 'Backup failed: ' + status.payload;
+        }
+
+        return emailService
+            .createTransporter(EMAIL_SERVICE, EMAIL_USER, EMAIL_PASSWORD)
+            .sendEmail(mailOptions)
+    }))
+    .subscribe(status => {
+        console.log('AutoBackup Successful'); // should be done, yet print status
+    }, error => {
+        console.log('AutoBackup Failed');
+        throw error;
+    });
 
 
 
 
+
+function buildBackupFileName(fileToBackupName: string): string {
+    const dateStr = CommonUtils.getCurrentDateFormatted();
+    return dateStr + '_backup_' + fileToBackupName;
+}
 
 
 
@@ -46,6 +127,9 @@ const DEFAULT_CONFIG_FILE_EXISTS = FS.existsSync(DEFAULT_CONFIG_FILE_PATH);
 /*
 * Code examples
 * */
+
+//     const path = '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt';
+// console.log(ARGS['name']);
 
 // const mailOptions = {
 //     from: 'autobackup@emai.com',

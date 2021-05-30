@@ -1,8 +1,10 @@
-import {Observable, of, Subject, combineLatest} from "rxjs";
-import {catchError, delay, map, tap} from "rxjs/operators";
+import {Observable, Subject} from "rxjs";
+import {map} from "rxjs/operators";
 import {Status} from "../model/status.model";
 import {CommonUtils} from "../common.utils";
 import {FileService} from "./file.service";
+import {ErrorCodeError} from "../model/error-code-error.model";
+import {ErrorCode} from "../model/error-code.enum";
 
 
 export class FtpService {
@@ -13,7 +15,7 @@ export class FtpService {
     constructor(private ftp: any,
                 private fs: any,
                 private fileService: FileService) {
-        this.ftp.on('error', (error) => this.ftpClientStatus$.next({status: 'error', payload: error}));
+        this.ftp.on('error', (error) => this.ftpClientStatus$.next({status: 'error', payload: new ErrorCodeError(ErrorCode.FTP_CONNECTION_FAILED, error)}));
         this.ftp.on('ready', () => this.ftpClientStatus$.next({status: 'connected'}));
         this.ftp.on('end', () => this.ftpClientStatus$.next({status: 'disconnected'}));
     }
@@ -40,12 +42,12 @@ export class FtpService {
 
                 // library doesn't check if file exists
                 if (!this.fileService.doesFileExist(sourcePath)) {
-                    observer.next({status: 'error', payload: new Error('Invalid source path, file does not exist! ' + sourcePath)});
+                    observer.next({status: 'error', payload: new ErrorCodeError(ErrorCode.UPLOAD_FAILED, new Error('Invalid source path, file does not exist! ' + sourcePath))});
                     return;
                 }
 
                 if (error) {
-                    observer.next({status: 'error', payload: error});
+                    observer.next({status: 'error', payload: new ErrorCodeError(ErrorCode.UPLOAD_FAILED, error)});
                     return;
                 }
 
@@ -62,12 +64,12 @@ export class FtpService {
             this.ftp.get(sourcePath, (error, stream) => {
                 // library doesn't check if parent file exists
                 if (!this.fileService.doesParentFileExist(targetPath)) {
-                    observer.next({status: 'error', payload: new Error('Invalid target path, parent file does not exist! ' + targetPath)});
+                    observer.next({status: 'error', payload: new ErrorCodeError(ErrorCode.DOWNLOAD_FAILED, new Error('Invalid target path, parent file does not exist! ' + targetPath))});
                     return;
                 }
 
                 if (error) {
-                    observer.next({status: 'error', payload: error});
+                    observer.next({status: 'error', payload: new ErrorCodeError(ErrorCode.DOWNLOAD_FAILED, error)});
                     return;
                 }
 
