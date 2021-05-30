@@ -25,6 +25,7 @@
     "ftp": "^0.3.10",
     "md5": "^2.3.0",
     "minimist": "^1.2.5",
+    "nodemailer": "^6.6.1",
     "rxjs": "^7.1.0"
   },
   "devDependencies": {
