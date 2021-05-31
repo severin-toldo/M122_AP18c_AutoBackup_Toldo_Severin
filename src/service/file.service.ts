@@ -71,6 +71,10 @@ export class FileService {
     public deleteFile(path: string): void {
         this.fs.unlinkSync(path);
     }
+
+    public writeToFile(path: string, content: string): void {
+        this.fs.writeFileSync(path, content);
+    }
 }
 
 

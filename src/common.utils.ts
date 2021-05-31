@@ -1,8 +1,22 @@
 import {Status} from "./model/status.model";
 import {ErrorCode} from "./model/error-code.enum";
 import {Observable, of} from "rxjs";
+import {Color} from "./model/color.enum";
+
 
 export class CommonUtils {
+
+    private static readonly NEXT_LINE_TERMINATOR = '\x1b[0m';
+
+
+    public static log(msg: string, color?: Color): void {
+        if(color) {
+            const formatStr = color.toString() + '%s' + CommonUtils.NEXT_LINE_TERMINATOR;
+            console.log(formatStr, msg);
+        } else {
+            console.log(msg);
+        }
+    }
 
     public static handleStatus(status: Status): Status {
         if (status.status === 'error') {
@@ -10,11 +24,6 @@ export class CommonUtils {
         }
 
         return status;
-    }
-
-    public static handleError(error: any): Observable<Status> {
-        const errorCode = error && error.errorCode ? error.errorCode : ErrorCode.UNKNOWN;
-        return of({status: 'error', payload: errorCode});
     }
 
     public static getCurrentYear(): number {

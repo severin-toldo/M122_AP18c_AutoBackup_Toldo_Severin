@@ -1,4 +1,4 @@
-import {Observable, Subject} from "rxjs";
+import {Observable, Subject, race} from "rxjs";
 import {map} from "rxjs/operators";
 import {Status} from "../model/status.model";
 import {CommonUtils} from "../common.utils";
@@ -9,15 +9,19 @@ import {ErrorCode} from "../model/error-code.enum";
 
 export class FtpService {
 
-    private ftpClientStatus$ = new Subject<Status>();
+    // private ftpClientStatus$ = new Subject<Status>();
+
+    private ftpClientConnected$ = new Subject<Status>();
+    private ftpClientDisconnected$ = new Subject<Status>();
+    private ftpClientError$ = new Subject<Status>();
 
 
     constructor(private ftp: any,
                 private fs: any,
                 private fileService: FileService) {
-        this.ftp.on('error', (error) => this.ftpClientStatus$.next({status: 'error', payload: new ErrorCodeError(ErrorCode.FTP_CONNECTION_FAILED, error)}));
-        this.ftp.on('ready', () => this.ftpClientStatus$.next({status: 'connected'}));
-        this.ftp.on('end', () => this.ftpClientStatus$.next({status: 'disconnected'}));
+        this.ftp.on('ready', () => this.ftpClientConnected$.next({status: 'connected'}));
+        this.ftp.on('end', () => this.ftpClientDisconnected$.next({status: 'disconnected'}));
+        this.ftp.on('error', (error) => this.ftpClientError$.next({status: 'error', payload: new ErrorCodeError(ErrorCode.FTP_CONNECTION_FAILED, error)}));
     }
 
     public connect(host: string, user: string, password: string): Observable<Status> {
@@ -27,13 +31,21 @@ export class FtpService {
             'password': password
         });
 
-        return this.ftpClientStatus$.pipe(map(status => CommonUtils.handleStatus(status)))
+        return race(
+            this.ftpClientConnected$,
+            this.ftpClientError$
+        )
+            .pipe(map(status => CommonUtils.handleStatus(status)))
     }
 
     public disconnect(): Observable<Status> {
         this.ftp.end();
 
-        return this.ftpClientStatus$.pipe(map(status => CommonUtils.handleStatus(status)))
+        return race(
+            this.ftpClientDisconnected$,
+            this.ftpClientError$
+        )
+            .pipe(map(status => CommonUtils.handleStatus(status)))
     }
 
     public upload(sourcePath: string, targetPath: string): Observable<Status> {
@@ -73,8 +85,21 @@ export class FtpService {
                     return;
                 }
 
-                stream.pipe(_this.fs.createWriteStream(targetPath));
-                observer.next({status: 'success'});
+                // stream to string
+                let fileContentAsString = '';
+
+                stream.on('data', (data) => {
+                    fileContentAsString += data.toString();
+                });
+
+                stream.on('end', () => {
+                    this.fileService.writeToFile(targetPath, fileContentAsString);
+                    observer.next({status: 'success'});
+                });
+
+                stream.on('error', error => {
+                    observer.next({status: 'error', payload: new ErrorCodeError(ErrorCode.DOWNLOAD_FAILED, error)});
+                });
             });
         })
             .pipe(map((status: Status) => CommonUtils.handleStatus(status)));
