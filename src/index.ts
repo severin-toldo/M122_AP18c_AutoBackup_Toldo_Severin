@@ -1,7 +1,7 @@
 // #!/usr/bin/env node
 
 
-import {catchError, finalize, map, switchMap, tap} from 'rxjs/operators';
+import {catchError, map, switchMap, tap} from 'rxjs/operators';
 import {FtpService} from "./service/ftp.service";
 import {FileService} from "./service/file.service";
 import {EmailService} from "./service/email.service";
@@ -9,6 +9,7 @@ import {CommonUtils} from "./common.utils";
 import {ErrorCode} from "./model/error-code.enum";
 import {ErrorCodeError} from "./model/error-code-error.model";
 import {Color} from "./model/color.enum";
+import {of} from "rxjs";
 
 declare function require(name: string);
 declare const process: {argv: any};
@@ -48,10 +49,9 @@ const FILE_TO_BACKUP_PATH = '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Sever
 const fileToBackupName = fileService.getFileName(FILE_TO_BACKUP_PATH);
 const backupFilePath = FTP_BACKUP_LOCATION + FileService.SEPARATOR + buildBackupFileName(fileToBackupName);
 const confirmationFilePath = fileService.getTmpDirPath() + FileService.SEPARATOR + fileToBackupName;
-// const confirmationFilePath = '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/' + fileToBackupName + '.txt';
 
 
-// TODO test all error cases....
+// TODO test all error cases.... -> check for code and email senidng
 // TODO arguments + config file
 // TODO improve error code exception
 // TODO kann anforderungen?
@@ -72,10 +72,6 @@ ftpService
         switchMap(() => ftpService.download(backupFilePath, confirmationFilePath)),
         switchMap(() => ftpService.disconnect()),
         map(() => {
-
-            // TOOD remove
-            // throw new ErrorCodeError(ErrorCode.FILES_NOT_THE_SAME, new Error('file sizes are not equal!'));
-
             const originalFileSize = fileService.getFileSize(FILE_TO_BACKUP_PATH);
             const downloadedFileSize = fileService.getFileSize(confirmationFilePath);
 
@@ -90,19 +86,20 @@ ftpService
                 throw new ErrorCodeError(ErrorCode.FILES_NOT_THE_SAME, new Error('file checksums are not equal!'));
             }
 
+            fileService.deleteFile(confirmationFilePath);
+
             const zippedFileBuffer = fileService.zipFile(FILE_TO_BACKUP_PATH);
 
             CommonUtils.log('Verifying uploaded file done.');
             return {status: 'success', payload: zippedFileBuffer};
         }),
-        finalize(() => fileService.deleteFile(confirmationFilePath)),
-        tap(() => {
-            CommonUtils.log('Backup successful.', Color.FgGreen);
-        }, error => {
+        tap(() => CommonUtils.log('Backup successful.', Color.FgGreen)),
+        catchError(error => {
             CommonUtils.log('Backup failed. ' + error.errorCode, Color.FgRed);
+            return of({status: 'error', payload: error.errorCode});
         }),
         tap(() => CommonUtils.log('Sending E-Mail...')),
-        map(status => {
+        switchMap(status => {
             const mailOptions: any = {
                 from: 'auto@backup.com',
                 to: EMAIL_TO,
@@ -127,11 +124,12 @@ ftpService
         }),
     )
     .subscribe(() => {
-        CommonUtils.log('Sending E-Mail done.');
-        CommonUtils.log('Stopping AutoBackup.', Color.FgGreen);
+        CommonUtils.log('Sending E-Mail done.', Color.FgGreen);
+        CommonUtils.log('Stopping AutoBackup.');
     }, error => {
         CommonUtils.log('Sending E-Mail failed.', Color.FgRed);
-        CommonUtils.log('Stopping AutoBackup.', Color.FgRed);
+        CommonUtils.log('Stopping AutoBackup.');
+
         throw error;
     });
 
