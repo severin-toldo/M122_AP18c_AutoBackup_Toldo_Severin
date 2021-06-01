@@ -51,10 +51,13 @@ const backupFilePath = FTP_BACKUP_LOCATION + FileService.SEPARATOR + buildBackup
 const confirmationFilePath = fileService.getTmpDirPath() + FileService.SEPARATOR + fileToBackupName;
 
 
-// TODO test all error cases.... -> check for code and email senidng
 // TODO arguments + config file
-// TODO improve error code exception
+// // console.log(ARGS['name']);
 // TODO kann anforderungen?
+// • E-Mail senden Ja / Nein konfigurierbar
+// • Empfänger E-Mail konfigurierbar
+// • FTP Server konfigurierbar
+
 // TODO publish everything to npm
 
 
@@ -138,105 +141,3 @@ function buildBackupFileName(fileToBackupName: string): string {
     const dateStr = CommonUtils.getCurrentDateFormatted();
     return dateStr + '_backup_' + fileToBackupName;
 }
-
-
-
-
-
-
-
-
-/*
-* Code examples
-* */
-
-// console.log('\x1b[36m%s\x1b[0m', 'I am cyan');  //cyan
-// console.log('\x1b[33m%s\x1b[0m', 'hey');  //yellow
-
-//     const path = '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt';
-// console.log(ARGS['name']);
-
-// const mailOptions = {
-//     from: 'autobackup@emai.com',
-//     to: 'stoldo@runmyaccounts.com',
-//     subject: 'Sending Email using Node.js',
-//     text: 'That was easy!',
-//     attachments: [
-//         {
-//             path: '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt'
-//         },
-//     ]
-// };
-//
-//
-// emailService
-//     .createTransporter('gmail', 'backuptool24@gmail.com', '?m6X7RgwH[3^6>E9E4gQnXFE*r,ENkaUL236,)Dykwcg2@Fxv&')
-//     .sendEmail(mailOptions)
-//     .subscribe(res => {
-//         console.log('email success! ', res);
-//     }, error => {
-//         console.log('email error! ', error);
-//     });
-
-// fileService
-//     .zipFile('/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt', '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.zip')
-//     .subscribe(res => {
-//         console.log('zip success! ', res);
-//     }, error => {
-//         console.log('zip error! ', error);
-//     });
-
-// ftpService
-//     .connect('ftp.byethost32.com', 'b32_28736452', '23hjSJD45')
-//     .pipe(switchMap(() => ftpService.download('/htdocs/mytest.txt', '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/copydddd3.txt')))
-//     .pipe(switchMap(() => ftpService.disconnect()))
-//     .subscribe(res2 => {
-//         console.log('download success! ', res2);
-//     }, error => {
-//         console.log('download error! ', error);
-//     });
-
-// ftpService
-//     .connect('ftp.byethost32.com', 'b32_28736452', '23hjSJD45')
-//     .pipe(switchMap(() => ftpService.upload('/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt', '/htdocssdsd/mytest_OBSERVALE_3.txt')))
-//     .pipe(switchMap(() => ftpService.disconnect()))
-//     .subscribe(res2 => {
-//         console.log('upload success! ', res2);
-//     }, error => {
-//         console.log('upload error! ', error);
-//     });
-
-// ftpService
-//     .connect('ftp.byethost32.com', 'b32_28736452', '23hjSJD45')
-//     .pipe(switchMap(() => ftpService.upload('/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/test.txt', '/htdocs/new_file_8.txt')))
-//     .pipe(switchMap(() => ftpService.download('/htdocs/mytest.txt', '/Users/stoldo/git/M122_AP18c_AutoBackup_Toldo_Severin/src/new_copy_8.txt')))
-//     .pipe(switchMap(() => ftpService.disconnect()))
-//     .subscribe(res2 => {
-//         console.log('download + upload success! ', res2);
-//     }, error => {
-//         console.log('download + upload error! ', error);
-//     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
