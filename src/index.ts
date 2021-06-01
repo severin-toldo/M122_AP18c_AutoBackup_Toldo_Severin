@@ -46,6 +46,7 @@ const EMAIL_PASSWORD = CommonUtils.getConfigKeyValue(ConfigKeys.EMAIL_PASSWORD, 
 
 const EMAIL_TO = CommonUtils.getConfigKeyValue(ConfigKeys.EMAIL_TO, CONFIG);
 const FILE_TO_BACKUP_PATH = CommonUtils.getConfigKeyValue(ConfigKeys.FILE_TO_BACKUP_PATH, CONFIG);
+const DO_SEND_MAIL = !!(EMAIL_SERVICE && EMAIL_USER && EMAIL_PASSWORD && EMAIL_TO);
 
 
 // business logic
@@ -91,33 +92,43 @@ ftpService
             CommonUtils.log('Backup failed. ' + error.errorCode, Color.FgRed);
             return of({status: 'error', payload: error.errorCode});
         }),
-        tap(() => CommonUtils.log('Sending E-Mail...')),
         switchMap(status => {
-            const mailOptions: any = {
-                from: 'auto@backup.com',
-                to: EMAIL_TO,
-                subject: 'AutoBackup Status E-Mail - ' + CommonUtils.getCurrentDateFormatted(),
-            };
+            if (DO_SEND_MAIL) {
+                CommonUtils.log('Sending E-Mail...')
 
-            if (status.status === 'success') {
-                mailOptions.text = 'Backup Successful.';
-                mailOptions.attachments = [
-                    {
-                        filename: fileToBackupName + '.zip',
-                        content: status.payload
-                    }
-                ];
-            } else {
-                mailOptions.text = 'Backup failed: ' + status.payload;
+                const mailOptions: any = {
+                    from: 'auto@backup.com',
+                    to: EMAIL_TO,
+                    subject: 'AutoBackup Status E-Mail - ' + CommonUtils.getCurrentDateFormatted(),
+                };
+
+                if (status.status === 'success') {
+                    mailOptions.text = 'Backup Successful.';
+                    mailOptions.attachments = [
+                        {
+                            filename: fileToBackupName + '.zip',
+                            content: status.payload
+                        }
+                    ];
+                } else {
+                    mailOptions.text = 'Backup failed: ' + status.payload;
+                }
+
+                return emailService
+                    .createTransporter(EMAIL_SERVICE, EMAIL_USER, EMAIL_PASSWORD)
+                    .sendEmail(mailOptions);
             }
 
-            return emailService
-                .createTransporter(EMAIL_SERVICE, EMAIL_USER, EMAIL_PASSWORD)
-                .sendEmail(mailOptions)
+            return of(null);
         }),
     )
     .subscribe(() => {
-        CommonUtils.log('Sending E-Mail done.', Color.FgGreen);
+        if (DO_SEND_MAIL) {
+            CommonUtils.log('Sending E-Mail done.', Color.FgGreen);
+        } else {
+            CommonUtils.log('No E-Mail sent.');
+        }
+
         CommonUtils.log('Stopping AutoBackup.');
     }, error => {
         CommonUtils.log('Sending E-Mail failed.', Color.FgRed);
