@@ -2,6 +2,7 @@ import {Status} from "./model/status.model";
 import {ErrorCode} from "./model/error-code.enum";
 import {Observable, of} from "rxjs";
 import {Color} from "./model/color.enum";
+import {ConfigKey} from "./model/config-key.model";
 
 
 export class CommonUtils {
@@ -28,6 +29,23 @@ export class CommonUtils {
 
     public static getCurrentYear(): number {
         return new Date().getFullYear();
+    }
+
+    public static isValidJson(str: string): boolean {
+        try {
+            JSON.parse(str);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    public static isConfigKeyPresent(configKey: ConfigKey, obj: any): boolean {
+        return !!obj &&!!this.getConfigKeyValue(configKey, obj);
+    }
+
+    public static getConfigKeyValue(configKey: ConfigKey, obj: any): any {
+        return obj ? obj[configKey.key] : null;
     }
 
     // https://stackoverflow.com/questions/19448436/how-to-create-date-in-yyyymmddhhmmss-format-using-javascript
