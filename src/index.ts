@@ -151,6 +151,7 @@ function buildConfig(): any {
 
     const config = {};
 
+    // command line argument overwrite config values, custom config overwrites default config
     ConfigKeys.values().forEach(configKey => {
         if (CommonUtils.isConfigKeyPresent(configKey, ARGS)) {
             config[configKey.key] = CommonUtils.getConfigKeyValue(configKey, ARGS);
@@ -178,6 +179,7 @@ function resolveConfigFile(path: string): any {
     return null;
 }
 
+// all required config keys must be set
 function validateConfig(config: any): void {
     ConfigKeys.values().forEach(configKey => {
         if (configKey.required && !CommonUtils.isConfigKeyPresent(configKey, config)) {

@@ -9,8 +9,6 @@ import {ErrorCode} from "../model/error-code.enum";
 
 export class FtpService {
 
-    // private ftpClientStatus$ = new Subject<Status>();
-
     private ftpClientConnected$ = new Subject<Status>();
     private ftpClientDisconnected$ = new Subject<Status>();
     private ftpClientError$ = new Subject<Status>();
