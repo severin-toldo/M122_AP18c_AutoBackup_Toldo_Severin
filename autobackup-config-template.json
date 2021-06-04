@@ -1,0 +1,14 @@
+{
+	"ftpHost": "ftpHost.com",
+	"ftpUser": "ftpUser",
+	"ftpPassword": "ftpPassword",
+	"ftpBackupLocation": "/ftpBackupLocation",
+	"emailService": "gmail",
+	"emailUser": "emailUser@gmail.com",
+	"emailPassword": "emailPassword",
+	"emailTo": "emailTo@gmail.com",
+	"file": "/path/to/file.txt",
+	"logFile": "/path/to/file.log"
+}
+
+

@@ -1,11 +1,3 @@
-import {from, Observable} from "rxjs";
-import {Status} from "../model/status.model";
-import {map} from "rxjs/operators";
-import {CommonUtils} from "../common.utils";
-import {ErrorCode} from "../model/error-code.enum";
-import {ErrorCodeError} from "../model/error-code-error.model";
-
-
 export class FileService {
 
     public static readonly DEFAULT_CHARSET = 'utf8';

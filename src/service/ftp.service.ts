@@ -1,4 +1,4 @@
-import {Observable, Subject, race} from "rxjs";
+import {Observable, race, Subject} from "rxjs";
 import {map} from "rxjs/operators";
 import {Status} from "../model/status.model";
 import {CommonUtils} from "../common.utils";
