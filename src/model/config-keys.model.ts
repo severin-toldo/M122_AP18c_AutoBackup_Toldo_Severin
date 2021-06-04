@@ -13,7 +13,8 @@ export class ConfigKeys {
             this.EMAIL_USER,
             this.EMAIL_PASSWORD,
             this.EMAIL_TO,
-            this.FILE_TO_BACKUP_PATH
+            this.FILE_TO_BACKUP_PATH,
+            this.LOG_FILE_PATH
         ];
     }
 
@@ -64,6 +65,11 @@ export class ConfigKeys {
 
     public static readonly FILE_TO_BACKUP_PATH: ConfigKey = {
         key: 'file',
+        required: false
+    };
+
+    public static readonly LOG_FILE_PATH: ConfigKey = {
+        key: 'logFile',
         required: false
     };
 

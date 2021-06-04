@@ -7,7 +7,6 @@ import {EmailService} from "./service/email.service";
 import {CommonUtils} from "./common.utils";
 import {ErrorCode} from "./model/error-code.enum";
 import {ErrorCodeError} from "./model/error-code-error.model";
-import {Color} from "./model/color.enum";
 import {of} from "rxjs";
 import {ConfigKeys} from "./model/config-keys.model";
 
@@ -24,6 +23,8 @@ const ARCHIVER = require('archiver');
 const MD5 = require('md5');
 const NODEMAILER = require('nodemailer');
 const ZIPPER = require('zip-local');
+const WINSTON = require('winston');
+const { format } = require('logform');
 
 // services
 const fileService = new FileService(FS, OS, ARCHIVER, MD5, ZIPPER);
@@ -31,7 +32,8 @@ const ftpService = new FtpService(new FTP(), FS, fileService); // new FTP() -> l
 const emailService = new EmailService(NODEMAILER);
 
 // global constants
-const DEFAULT_CONFIG_FILE_NAME = 'autobackup.conf';
+const SCRIPT_NAME = 'AutoBackup';
+const DEFAULT_CONFIG_FILE_NAME = 'autobackup-config.json';
 const DEFAULT_CONFIG_FILE_PATH = fileService.getHomeDirPath() + '/' + DEFAULT_CONFIG_FILE_NAME;
 const CONFIG = buildConfig();
 
@@ -46,11 +48,15 @@ const EMAIL_PASSWORD = CommonUtils.getConfigKeyValue(ConfigKeys.EMAIL_PASSWORD, 
 
 const EMAIL_TO = CommonUtils.getConfigKeyValue(ConfigKeys.EMAIL_TO, CONFIG);
 const FILE_TO_BACKUP_PATH = CommonUtils.getConfigKeyValue(ConfigKeys.FILE_TO_BACKUP_PATH, CONFIG);
+const LOG_FILE_PATH = CommonUtils.getConfigKeyValue(ConfigKeys.LOG_FILE_PATH, CONFIG);
 const DO_SEND_MAIL = !!(EMAIL_SERVICE && EMAIL_USER && EMAIL_PASSWORD && EMAIL_TO);
+
+const logger = buildLogger();
 
 
 // business logic
-CommonUtils.log('Starting AutoBackup...');
+logger.info('Starting ' + SCRIPT_NAME);
+
 
 const fileToBackupName = fileService.getFileName(FILE_TO_BACKUP_PATH);
 const backupFilePath = FTP_BACKUP_LOCATION + FileService.SEPARATOR + buildBackupFileName(fileToBackupName);
@@ -59,10 +65,10 @@ const confirmationFilePath = fileService.getTmpDirPath() + FileService.SEPARATOR
 ftpService
     .connect(FTP_HOST, FTP_USER, FTP_PASSWORD)
     .pipe(
-        tap(() => CommonUtils.log('Uploading file...')),
+        tap(() => logger.info('Uploading file...')),
         switchMap(() => ftpService.upload(FILE_TO_BACKUP_PATH, backupFilePath)),
-        tap(() => CommonUtils.log('Uploading file done.')),
-        tap(() => CommonUtils.log('Verifying uploaded file...')),
+        tap(() => logger.info('Uploading file done.')),
+        tap(() => logger.info('Verifying uploaded file...')),
         switchMap(() => ftpService.download(backupFilePath, confirmationFilePath)),
         switchMap(() => ftpService.disconnect()),
         map(() => {
@@ -84,17 +90,17 @@ ftpService
 
             const zippedFileBuffer = fileService.zipFile(FILE_TO_BACKUP_PATH);
 
-            CommonUtils.log('Verifying uploaded file done.');
+            logger.info('Verifying uploaded file done.');
             return {status: 'success', payload: zippedFileBuffer};
         }),
-        tap(() => CommonUtils.log('Backup successful.', Color.FgGreen)),
+        tap(() => logger.info('Backup successful.')),
         catchError(error => {
-            CommonUtils.log('Backup failed. ' + error.errorCode, Color.FgRed);
+            logger.error('Backup failed. ' + error.errorCode);
             return of({status: 'error', payload: error.errorCode});
         }),
         switchMap(status => {
             if (DO_SEND_MAIL) {
-                CommonUtils.log('Sending E-Mail...')
+                logger.info('Sending E-Mail...');
 
                 const mailOptions: any = {
                     from: 'auto@backup.com',
@@ -124,15 +130,15 @@ ftpService
     )
     .subscribe(() => {
         if (DO_SEND_MAIL) {
-            CommonUtils.log('Sending E-Mail done.', Color.FgGreen);
+            logger.info('Sending E-Mail done.');
         } else {
-            CommonUtils.log('No E-Mail sent.');
+            logger.warn('No E-Mail sent.');
         }
 
-        CommonUtils.log('Stopping AutoBackup.');
+        logger.info('Stopping AutoBackup.');
     }, error => {
-        CommonUtils.log('Sending E-Mail failed.', Color.FgRed);
-        CommonUtils.log('Stopping AutoBackup.');
+        logger.error('Sending E-Mail failed.');
+        logger.info('Stopping AutoBackup.');
 
         throw error;
     });
@@ -183,4 +189,29 @@ function validateConfig(config: any): void {
 function buildBackupFileName(fileToBackupName: string): string {
     const dateStr = CommonUtils.getCurrentDateFormatted();
     return dateStr + '_backup_' + fileToBackupName;
+}
+
+function buildLogger(): any {
+    const formatFunction = (data: any) => {
+        return `${data.timestamp} - ${data.level.toUpperCase()} ${SCRIPT_NAME}: ${data.message.trim()}`;
+    };
+
+    const logfileFormat = format.combine(
+        format.timestamp(),
+        format.align(),
+        format.printf(info => formatFunction(info))
+    );
+
+    const consoleFormat = format.combine(
+        format.timestamp(),
+        format.align(),
+        format.printf(data => WINSTON.format.colorize().colorize(data.level, formatFunction(data)))
+    );
+
+    return WINSTON.createLogger({
+        transports: [
+            new WINSTON.transports.File({ filename: LOG_FILE_PATH, format: logfileFormat }),
+            new WINSTON.transports.Console({ format: consoleFormat })
+        ],
+    });
 }
