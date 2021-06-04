@@ -65,7 +65,7 @@ export class ConfigKeys {
 
     public static readonly FILE_TO_BACKUP_PATH: ConfigKey = {
         key: 'file',
-        required: false
+        required: true
     };
 
     public static readonly LOG_FILE_PATH: ConfigKey = {

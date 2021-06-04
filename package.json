@@ -1,6 +1,6 @@
 {
   "name": "m122_ap18c_autobackup_toldo_severin",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "AutoBackup",
   "main": "dist/out-tsc/index.js",
   "scripts": {

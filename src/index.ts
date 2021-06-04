@@ -208,10 +208,13 @@ function buildLogger(): any {
         format.printf(data => WINSTON.format.colorize().colorize(data.level, formatFunction(data)))
     );
 
+    const transports = [new WINSTON.transports.Console({ format: consoleFormat })];
+
+    if (LOG_FILE_PATH) {
+        transports.push(new WINSTON.transports.File({ filename: LOG_FILE_PATH, format: logfileFormat }));
+    }
+
     return WINSTON.createLogger({
-        transports: [
-            new WINSTON.transports.File({ filename: LOG_FILE_PATH, format: logfileFormat }),
-            new WINSTON.transports.Console({ format: consoleFormat })
-        ],
+        transports: transports,
     });
 }
