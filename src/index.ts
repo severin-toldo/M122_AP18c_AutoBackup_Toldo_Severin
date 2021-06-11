@@ -10,6 +10,11 @@ import {ErrorCodeError} from "./model/error-code-error.model";
 import {of} from "rxjs";
 import {ConfigKeys} from "./model/config-keys.model";
 
+/*
+ * Main Script file
+ * @author Severin Toldo
+ * */
+
 // typescript runtime declares
 declare function require(name: string);
 declare const process: {argv: any};

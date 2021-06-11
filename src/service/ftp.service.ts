@@ -6,7 +6,10 @@ import {FileService} from "./file.service";
 import {ErrorCodeError} from "../model/error-code-error.model";
 import {ErrorCode} from "../model/error-code.enum";
 
-
+/*
+ * FtpService
+ * @author Severin Toldo
+ * */
 export class FtpService {
 
     private ftpClientConnected$ = new Subject<Status>();

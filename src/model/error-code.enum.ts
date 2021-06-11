@@ -1,3 +1,7 @@
+/*
+ * ErrorCode
+ * @author Severin Toldo
+ * */
 export enum ErrorCode {
     UNKNOWN = 'UNKNOWN',
     FTP_CONNECTION_FAILED = 'FTP_CONNECTION_FAILED',

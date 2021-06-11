@@ -1,5 +1,9 @@
 import {ConfigKey} from "./config-key.model";
 
+/*
+ * ConfigKeys. Each key represent a command line argument
+ * @author Severin Toldo
+ * */
 export class ConfigKeys {
 
     public static values(): ConfigKey[] {

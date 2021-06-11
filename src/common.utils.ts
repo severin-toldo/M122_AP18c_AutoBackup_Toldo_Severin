@@ -1,7 +1,10 @@
 import {Status} from "./model/status.model";
 import {ConfigKey} from "./model/config-key.model";
 
-
+/*
+ * Holds helper functions
+ * @author Severin Toldo
+ * */
 export class CommonUtils {
 
     private static readonly NEXT_LINE_TERMINATOR = '\x1b[0m';

@@ -1,3 +1,8 @@
+
+/*
+ * FileService
+ * @author Severin Toldo
+ * */
 export class FileService {
 
     public static readonly DEFAULT_CHARSET = 'utf8';

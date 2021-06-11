@@ -6,6 +6,10 @@ import {ErrorCode} from "../model/error-code.enum";
 import {ErrorCodeError} from "../model/error-code-error.model";
 
 
+/*
+ * EmailService
+ * @author Severin Toldo
+ * */
 export class EmailService {
 
     public static readonly MAX_ALLOWED_ATTACHMENT_SIZE_IN_MB = 25;
