@@ -7,13 +7,15 @@ Guide for the project M122 AP18c AutoBackup Toldo Severin
 1) Install [NPM](https://www.npmjs.com/get-npm) (if not already done)
 2) `npm install -g m122_ap18c_autobackup_toldo_severin`
 3) `which autobackup`
-<br/>
-_Example: /usr/local/bin/autobackup_
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_Example: `/usr/local/bin/autobackup`_
+
 4) `node /path/to/autobackup`
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_Example: `node /usr/local/bin/autobackup`_
 <br/>
-_Example: node /usr/local/bin/autobackup_
-<br/>
-_*Alternatively you can add it to PATH_
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_*Alternatively you can add it to PATH_
+
 
 ## Configuration
 
@@ -23,13 +25,13 @@ How to configure M122 AP18c AutoBackup Toldo Severin
 
 List of possible arguments. They can be passed via a config file, as command line arguments or both. 
 <br/>
+<br/>
+Note:
 - default config file location: `/USER_HOME/autobackup-config.json`
-- commandline arguments overwrite config files
 - if `--configFile` argument is set, default config file will be ignored
+- commandline arguments overwrite config files
 - Config files must be valid json
 
-
-Note: Command line arguments will overwrite config file arguments.
 
 | Argument            | Required | Description                           | Example Value       | Notes                                               |
 |---------------------|----------|---------------------------------------|---------------------|-----------------------------------------------------|
